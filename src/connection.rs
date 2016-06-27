@@ -263,6 +263,7 @@ impl<H> Connection<H>
     }
 
     pub fn error(&mut self, err: Error) {
+        info!("TODR: Handling error: {:?}", err);
         match self.state {
             Connecting(_, ref mut res) => {
                 match err.kind {
@@ -274,15 +275,19 @@ impl<H> Connection<H>
                     Kind::Protocol => {
                         let msg = err.to_string();
                         self.handler.on_error(err);
+                        info!("TODR: Attempting to fill buffer with error response.");
                         if let Server = self.endpoint {
                             res.get_mut().clear();
                             if let Err(err) = write!(
                                     res.get_mut(),
                                     "HTTP/1.1 400 Bad Request\r\n\r\n{}", msg)
                             {
+
+                                info!("TODR: Attempting to fill buffer with error response: ERROR");
                                 self.handler.on_error(Error::from(err));
                                 self.events = EventSet::none();
                             } else {
+                                info!("TODR: Attempting to fill buffer with error response: OK. Proceed.");
                                 self.events.remove(EventSet::readable());
                                 self.events.insert(EventSet::writable());
                             }
@@ -293,14 +298,17 @@ impl<H> Connection<H>
                     _ => {
                         let msg = err.to_string();
                         self.handler.on_error(err);
+                        info!("TODR: Attempting to fill buffer with error response (500)");
                         if let Server = self.endpoint {
                             res.get_mut().clear();
                             if let Err(err) = write!(
                                     res.get_mut(),
                                     "HTTP/1.1 500 Internal Server Error\r\n\r\n{}", msg) {
+                                info!("TODR: Attempting to fill buffer with error response (500): ERR");
                                 self.handler.on_error(Error::from(err));
                                 self.events = EventSet::none();
                             } else {
+                                info!("TODR: Attempting to fill buffer with error response (500): OK");
                                 self.events.remove(EventSet::readable());
                                 self.events.insert(EventSet::writable());
                             }
@@ -407,7 +415,9 @@ impl<H> Connection<H>
             match self.endpoint {
                 Server => {
                     let mut done = false;
+                    debug!("TODR: Attempting to write handshake.");
                     if let Some(len) = try!(self.socket.try_write_buf(res)) {
+                        debug!("TODR: Wrote: {} vs {}", len, res.get_ref().len());
                         if res.get_ref().len() == len {
                             done = true
                         }
@@ -555,6 +565,7 @@ impl<H> Connection<H>
         if self.socket.is_negotiating() {
             trace!("Performing TLS negotiation on {}.", self.peer_addr());
             try!(self.socket.clear_negotiating());
+            info!("TODR: Reading?");
             self.write()
         } else {
             let res = if self.state.is_connecting() {
@@ -812,6 +823,7 @@ impl<H> Connection<H>
                 Ok(self.check_events())
             };
 
+            info!("TODR: Result: {:?}", res);
             if self.socket.is_negotiating() && res.is_ok() {
                 self.events.remove(EventSet::writable());
                 self.events.insert(EventSet::readable());

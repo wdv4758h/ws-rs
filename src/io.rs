@@ -388,21 +388,24 @@ impl<F> mio::Handler for Handler <F>
                         let conn_events = conn.events();
 
                         if (events & conn_events).is_readable() {
+                            info!("TODR: Attempting to read");
                             if let Err(err) = conn.read() {
                                 conn.error(err)
                             }
                         }
 
                         if (events & conn_events).is_writable() {
+                            info!("TODR: Attempting to write");
                             if let Err(err) = conn.write() {
                                 conn.error(err)
                             }
                         }
 
                         // connection events may have changed
-                        (conn.events().is_readable() || conn.events().is_writable()) && !conn.events().is_hup()
+                        conn.events().is_readable() || conn.events().is_writable()
                     };
 
+                    info!("TODR: Connection is active: {}", active);
                     // NOTE: Closing state only applies after a ws connection was successfully
                     // established. It's possible that we may go inactive while in a connecting
                     // state if the handshake fails.
