@@ -416,9 +416,9 @@ impl<H> Connection<H>
                 Server => {
                     let mut done = false;
                     debug!("TODR: Attempting to write handshake.");
+                    let left = res.get_ref().len() - res.position() as usize;
                     if let Some(len) = try!(self.socket.try_write_buf(res)) {
-                        debug!("TODR: Wrote: {} vs {}", len, res.get_ref().len());
-                        if res.get_ref().len() == len {
+                        if left == len {
                             done = true
                         }
                     }
@@ -427,8 +427,9 @@ impl<H> Connection<H>
                     }
                 }
                 Client =>  {
+                    let left = req.get_ref().len() - req.position() as usize;
                     if let Some(len) = try!(self.socket.try_write_buf(req)) {
-                        if req.get_ref().len() == len {
+                        if left == len {
                             trace!("Finished writing handshake request to {}",
                                 self.socket
                                     .peer_addr()
