@@ -400,7 +400,7 @@ impl<F> mio::Handler for Handler <F>
                         }
 
                         // connection events may have changed
-                        conn.events().is_readable() || conn.events().is_writable()
+                        (conn.events().is_readable() || conn.events().is_writable()) && !conn.events().is_hup()
                     };
 
                     // NOTE: Closing state only applies after a ws connection was successfully
