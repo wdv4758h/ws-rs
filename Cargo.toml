@@ -12,7 +12,7 @@ version = "0.5.1"
 [dependencies]
 httparse = "*"
 log = "*"
-mio = { version = "*", git = "https://github.com/carllerche/mio.git" }
+mio = { git = "https://github.com/ethcore/mio.git", branch = "v0.5.x" }
 rand = "*"
 sha1 = "*"
 url = "1.0.0"
