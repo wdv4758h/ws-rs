@@ -24,11 +24,10 @@ fn generate_key() -> String {
 
 pub fn hash_key(key: &[u8]) -> String {
     let mut hasher = sha1::Sha1::new();
-    let mut buf = [0u8; 20];
 
     hasher.update(key);
     hasher.update(WS_GUID.as_bytes());
-    hasher.output(&mut buf);
+    let buf = hasher.digest().bytes();
 
     encode_base64(&buf)
 }
@@ -606,6 +605,12 @@ impl Response {
         debug!("Built response from request:\n{}", res);
         Ok(res)
     }
+
+    /// Returns bytes length of the response body.
+    pub fn len(&self) -> usize {
+        self.body.as_bytes().len()
+    }
+ 
 
     /// Write a response out to a buffer
     pub fn format<W>(&self, w: &mut W) -> Result<()>
